@@ -1,21 +1,30 @@
 package main
 
 import (
+	"bufio"
+	"expvar"
 	"net"
+	"net/http"
 	"os"
 
+	cache "github.com/patrickmn/go-cache"
 	"go.uber.org/zap"
 )
 
 const (
 	CONN_HOST = "0.0.0.0"
+	// CONN_HOST = "120.92.8.170"
 	CONN_PORT = "8765"
 	CONN_TYPE = "tcp"
 )
 
 var logger *zap.SugaredLogger
+var info = expvar.NewString("info")
+var gCache = cache.New(0, 0)
 
 func main() {
+
+	go http.ListenAndServe(":9876", nil)
 
 	logg, _ := zap.NewProduction()
 	defer logger.Sync() // flushes buffer, if any
@@ -40,7 +49,6 @@ func main() {
 		}
 		// Handle connections in a new goroutine.
 
-		// bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 		go handleRequest(conn)
 	}
 }
@@ -49,13 +57,23 @@ func handleRequest(conn net.Conn) {
 
 	defer conn.Close()
 
-	handshake(conn)
-
 	rtmpConnIns := rtmpConn{
-		conn:   conn,
-		cksize: 128,
+		conn:    conn,
+		cksize:  128,
+		rw:      bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)),
+		mLen:    make(map[int]int, 0),
+		mTypeId: make(map[int]int, 0),
 	}
+
+	if nil != handshake(rtmpConnIns) {
+		return
+	}
+
 	for {
-		waitMsg(rtmpConnIns)
+		err := waitMsg(&rtmpConnIns)
+		if err != nil {
+			logger.Infow("session", "detail", "EOF")
+			return
+		}
 	}
 }

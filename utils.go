@@ -1,9 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"net"
 )
+
+func get2bytes(buf []byte) int {
+	return int(binary.BigEndian.Uint16(buf))
+}
 
 func get3bytes(buf []byte) int {
 
@@ -33,34 +40,67 @@ func get4bytes(buf []byte) int {
 // 	return buf
 // }
 
-func readConn(conn net.Conn, len int) []byte {
+func readConn(rw *bufio.ReadWriter, len int) ([]byte, error) {
+
+	var e error
+
+	var tail int
+	var ret []byte
+
+	tail = len
+	for tail != 0 {
+		buf := make([]byte, tail)
+		retLen, err := rw.Read(buf)
+		if err != nil {
+			logger.Errorw("conn", "error", err.Error())
+			e = errors.New("rw Read error")
+			return ret, e
+		}
+
+		if retLen != tail {
+			// logger.Infow("conn", "detail",
+			// 	fmt.Sprintf("Error reading part len not equal, len:%d,  ret:%d, buf:%v", len, retLen, buf))
+			// logger.Infow("conn", "detail",
+			// 	fmt.Sprintf("Error reading part len not equal, len:%d,  ret:%d, continue...", len, retLen))
+			// e = errors.New("rw Read len error")
+		}
+
+		ret = append(ret, buf...)
+		tail = tail - retLen
+	}
+	return ret, e
+}
+
+func readConnPart(rw bufio.ReadWriter, len int) []byte {
 
 	buf := make([]byte, len)
-	retLen, err := conn.Read(buf)
+	retLen, err := rw.Read(buf)
 	if err != nil {
-		logger.Errorw("Error reading part:", "error", err.Error())
+		logger.Errorw("conn", "error", err.Error())
 	}
 
 	if retLen != len {
-		logger.Errorw("Error reading part len not equal", "len", len, "retlen", retLen, "buf", buf)
+		logger.Errorw("conn", "detail",
+			fmt.Sprintf("Error reading part len not equal, len:%d,  ret:%d, buf:%v", len, retLen, buf))
 	}
 
 	return buf
 }
-func readConnPart(conn net.Conn, len int) []byte {
 
-	buf := make([]byte, len)
-	retLen, err := conn.Read(buf)
-	if err != nil {
-		logger.Errorw("Error reading part:", "error", err.Error())
-	}
+// func readConnPart(conn net.Conn, len int) []byte {
 
-	if retLen != len {
-		logger.Errorw("Error reading part len not equal", "len", len, "retlen", retLen, "buf", buf)
-	}
+// 	buf := make([]byte, len)
+// 	retLen, err := conn.Read(buf)
+// 	if err != nil {
+// 		logger.Errorw("Error reading part:", "error", err.Error())
+// 	}
 
-	return buf
-}
+// 	if retLen != len {
+// 		logger.Errorw("Error reading part len not equal", "len", len, "retlen", retLen, "buf", buf)
+// 	}
+
+// 	return buf
+// }
 
 func writeConn(conn net.Conn, buf []byte) {
 	retLen, err := conn.Write(buf)

@@ -64,6 +64,10 @@ func parseAMF0one(buf []byte) (amf0, int) {
 		// obj
 		ret.obj, parsedLen = parseObj(buf[1:])
 		// spew.Dump(ret.obj, parsedLen)
+	} else if ret.marker == 5 {
+		// null
+		parsedLen = 1
+		// spew.Dump(ret.obj, parsedLen)
 	} else {
 		logger.Errorw("marker not support")
 	}
