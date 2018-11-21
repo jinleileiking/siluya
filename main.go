@@ -1,12 +1,13 @@
 package main
 
 import (
-	cache "Gout/go-cache"
 	"bufio"
 	"expvar"
 	"net"
 	"net/http"
 	"os"
+
+	cache "github.com/patrickmn/go-cache"
 
 	"go.uber.org/zap"
 )
