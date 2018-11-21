@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
 
 	"net"
 
@@ -135,10 +136,12 @@ func waitMsg(conn *rtmpConn) error {
 		// os.Exit(0)
 	case 9:
 		logger.Infow("message", "type", "receive video")
+		processVideo(conn, chunkData)
 	case 8:
 		logger.Infow("message", "type", "receive audio")
 	default:
 		logger.Infow("message", "type", fmt.Sprintf("not support msgtypeid: %d", msgTypeId))
+		os.Exit(0)
 	}
 
 	//TODO: extended timestamp

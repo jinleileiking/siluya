@@ -1,13 +1,13 @@
 package main
 
 import (
+	cache "Gout/go-cache"
 	"bufio"
 	"expvar"
 	"net"
 	"net/http"
 	"os"
 
-	cache "github.com/patrickmn/go-cache"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +20,7 @@ const (
 
 var logger *zap.SugaredLogger
 var info = expvar.NewString("info")
+var evCache = expvar.NewString("cache")
 var gCache = cache.New(0, 0)
 
 func main() {

@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/nareix/joy4/format/flv/flvio"
 )
 
@@ -22,6 +24,9 @@ func processVideo(conn *rtmpConn, chunkData []byte) {
 		// conn.vHdr = append(conn.vHdr, chunkData...)
 
 		gCache.Set(conn.app+":"+conn.name+":"+"hdr", chunkData, 0)
+		spew.Dump("---------------", gCache)
+		os.Exit(0)
+		// evCache.Set(spew.Sdump(gCache))
 
 		logger.Infow("publish", "detail", fmt.Sprintf("update header: %v", tag))
 
